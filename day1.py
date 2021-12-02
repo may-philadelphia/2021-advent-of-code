@@ -5,6 +5,11 @@ from typing import Iterable, Tuple, T
 
 
 def iter_window(it: Iterable[T], n: int) -> Iterable[Tuple[T, ...]]:
+    """
+    Iterates through it with a window of length n
+
+    Memory: O(n); Time: O(len(it))
+    """
     tees = tee(it, n)
     # Advance each tee so first starts with item 0, second with item 1, etc.
     for i in range(len(tees)):
@@ -14,6 +19,11 @@ def iter_window(it: Iterable[T], n: int) -> Iterable[Tuple[T, ...]]:
 
 
 def count_decreasing_windows(data: Iterable[int], win_len: int) -> int:
+    """
+    Counts the number of instances where the sum of a window of data is increasing
+
+    Memory: O(win_len); Time: O(len(data))
+    """
     return sum(1 for _ in (filter(lambda i: i[0] < i[1], pairwise(sum(w) for w in iter_window(data, win_len)))))
 
 
