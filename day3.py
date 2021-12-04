@@ -36,6 +36,12 @@ def match_bit_frequency(word_len: int, num_words: int, flag: int, check: str, f:
 
 
 def filter_bit_frequency(word_len: int, num_words: int, flag: int, check: str, f: IO, candidates: List[int]) -> int:
+    """
+    Filters the list of candidates to those with most/least common values for each bit
+
+    Memory: O(num_words); Time: O(num_words * word_len)
+    ^ both technically upper bounds; significantly lower in practice depending on number of words filtered at each step
+    """
     if num_words == 1:
         f.seek(candidates[0] - word_len - 1)
         f.readline()
