@@ -1,7 +1,7 @@
 import sys
 import time
 from functools import reduce
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, IO, List
 
 
 def bit_to_int(c: str) -> int:
@@ -9,7 +9,7 @@ def bit_to_int(c: str) -> int:
     return 1 if c == '\n' else int(c)
 
 
-def calculate_gamma_epsilon(data: Iterable[str]) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
+def calculate_gamma_epsilon(data: Iterable[str]) -> Tuple[Tuple[int, ...], Tuple[int, ...], int]:
     """Calculates bit frequency by position. Gamma is most frequent; epsilon is least frequent
 
     Sums all 1s by bit position, then calculates frequency by dividing by count of data points
@@ -21,54 +21,48 @@ def calculate_gamma_epsilon(data: Iterable[str]) -> Tuple[Tuple[int, ...], Tuple
         [bit_to_int(c) for c in next(data)]  # initialize w/ first line b/c we don't know word length
     )
     gamma = tuple(s // (sums[-1] // 2) for s in sums[:-1])
-    return gamma, tuple(1 - s for s in gamma)
+    return gamma, tuple(1 - s for s in gamma), sums[-1]
 
 
 def tuple_to_int(t: Tuple[int, ...]) -> int:
     """Converts a tuple of bits into an integer"""
-    return int(''.join(str(b) for b in t), 2)
+    return int(''.join(str(b) for b in t), 2)\
 
 
-def calculate_life_support(gamma: Tuple[int, ...], epsilon: Tuple[int, ...], data: Iterable[str]) -> int:
-    checks = [epsilon, gamma]
-    vals = [None, None]
-    precisions = [0, 0]
-    for word in data:
-        word = word.strip()
-        flag = None
-        for i, char in enumerate(int(c) for c in word):
-            if i == 0:
-                flag = int(char == checks[1][0])
-            else:
-                if char != checks[flag][i]:
-                    if i > precisions[flag]:
-                        precisions[flag] = i
-                        vals[flag] = word
-                    break
-        else:
-            vals[flag] = word
-            precisions[flag] = i
-    print(vals, precisions)
-    print(checks)
-    print(int(vals[0], 2), int(vals[1], 2))
-    return int(vals[0], 2) * int(vals[1], 2)
+def match_bit_frequency(word_len: int, num_words: int, flag: int, check: str, f: IO):
+    return filter_bit_frequency(
+        word_len, num_words, flag, check, f, [i * (word_len + 1) for i in range(num_words)]
+    )
+
+
+def filter_bit_frequency(word_len: int, num_words: int, flag: int, check: str, f: IO, candidates: List[int]) -> int:
+    if num_words == 1:
+        f.seek(candidates[0] - word_len - 1)
+        f.readline()
+        return int(f.readline().strip(), 2)
+    num_words = bits = 0
+    filtered = []
+    for word in candidates:
+        f.seek(word)
+        if f.read(1) == check:
+            filtered.append(word + 1)
+            num_words += 1
+            bits += int(f.read(1))
+    return filter_bit_frequency(word_len, num_words, flag, str(abs(flag - (2 * bits) // num_words)), f, filtered)
 
 
 if __name__ == "__main__":
     args = sys.argv
-    print(args)
     if len(args) < 2:
         print("Please provide input file")
         exit(1)
     with open(sys.argv[1]) as f:
         start = time.time()
-        gamma, epsilon = calculate_gamma_epsilon(iter(f))
+        gamma, epsilon, num_words = calculate_gamma_epsilon(iter(f))
         power = tuple_to_int(gamma) * tuple_to_int(epsilon)
         print(f"1st puzzle solution: power={power} in {time.time()-start:.6f} seconds")
-        f.seek(0)
         start = time.time()
-        life_support = calculate_life_support(gamma, epsilon, iter(f))
+        o2 = match_bit_frequency(len(gamma), num_words, 0, str(gamma[0]), f)
+        co2 = match_bit_frequency(len(epsilon), num_words, 1, str(epsilon[0]), f)
+        life_support = o2 * co2
         print(f"2nd puzzle solution: power={life_support} in {time.time()-start:.6f} seconds")
-        # start = time.time()
-        # x, y, _ = calculate_aimed_position(data)
-        # print(f"2nd puzzle solution: X={x}, Y={y}, X*Y={x*y} in {time.time()-start:.6f} seconds")
