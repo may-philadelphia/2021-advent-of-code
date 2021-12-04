@@ -45,9 +45,10 @@ if __name__ == "__main__":
         print("Please provide input file")
         exit(1)
     with open(sys.argv[1]) as f:
-        start = time.time()
         data = list(f.readlines())
+        start = time.time()
         x, y = calculate_position(data)
         print(f"1st puzzle solution: X={x}, Y={y}, X*Y={x*y} in {time.time()-start:.6f} seconds")
+        start = time.time()
         x, y, _ = calculate_aimed_position(data)
         print(f"2nd puzzle solution: X={x}, Y={y}, X*Y={x*y} in {time.time()-start:.6f} seconds")
